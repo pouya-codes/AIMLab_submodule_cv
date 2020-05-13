@@ -9,7 +9,7 @@ install_requires=[
         'pynvml',
         'scikit-image',
         'scikit-learn',
-        'pytorch',
+        'torch',
         'torchvision']
 
 with open("README.md", "r") as fh:
