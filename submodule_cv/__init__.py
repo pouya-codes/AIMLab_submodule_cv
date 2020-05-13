@@ -86,8 +86,7 @@ class PatchHanger(object):
         dict
             The model config
         '''
-        with open(self.model_config_location) as f:
-            return json.load(f)
+        return utils.load_json(self.model_config_location)
     
     def build_model(self):
         '''Builds model by reading file specified in model config path
