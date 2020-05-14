@@ -112,10 +112,7 @@ class DeepModel(BaseModel):
     def get_current_errors(self):
         return self.loss.item()
 
-    def load_state(self, save_location, test_name, itr):
-        filename = '{}_{}.pth'.format(str(test_name), str(itr))
-        save_path = os.path.join(save_location, filename)
-
+    def load_state(self, save_path):
         if not torch.cuda.is_available():
             state = torch.load(save_path, map_location='cpu')
         else:
