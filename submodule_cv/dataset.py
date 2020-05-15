@@ -1,14 +1,36 @@
 import os
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 from torchvision import transforms, utils
 from PIL import Image
 from skimage import io, transform
 import numpy
 import torchvision
 
-class PatchDataset(Dataset):
+import submodule_cv.preprocess as preprocess
 
+class SlideExtractPatchDataset(Dataset):
+    def __init__(self, os_slide, patch_size, resize_size, color_jitter=False):
+        self.os_slide = os_slide
+        self.patch_size = patch_size
+        self.width, self.height = self.os_slide.dimensions
+        self.tile_width = int(self.width / self.patch_size)
+        self.tile_height = int(self.height / self.patch_size)
+
+    def __len__(self):
+        return self.tile_width * self.tile_height
+
+    def __getitem__(self, idx):
+        tile_x = idx % self.tile_width
+        tile_y = int(idx / self.tile_width)
+        x = tile_x * self.patch_size
+        y = tile_y * self.patch_size
+        patch = preprocess.extract_and_resize(self.os_slide,
+                x, y, self.patch_size, self.patch_size)
+        return (patch, ), (tile_x, tile_y,)
+
+
+class PatchDataset(Dataset):
     def __init__(self, x_set, y_set, transform=None, color_jitter=False):
         """
         Args:
@@ -27,7 +49,6 @@ class PatchDataset(Dataset):
 
         self.color_jitter = color_jitter
         self.COLOR_JITTER = torchvision.transforms.ColorJitter(64.0 / 255, 0.75, 0.25, 0.04)
-
 
     def __len__(self):
         return self.length        
@@ -54,4 +75,4 @@ class PatchDataset(Dataset):
         x = torch.from_numpy(x).type(torch.float)
 
 
-        return x, torch.tensor(y)
+        return (x, ), torch.tensor(y)
