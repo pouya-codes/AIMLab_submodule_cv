@@ -78,7 +78,7 @@ class DeepModel(BaseModel):
             self.model = self.model.eval()
 
     def forward(self, input_data):
-        output = self.model.forward(*input_data)
+        output = self.model.forward(input_data)
 
         if type(output).__name__ in ['GoogLeNetOutputs', 'InceptionOutputs'] and config["parameters"]["aux_logits"]:
             logits = output.logits
