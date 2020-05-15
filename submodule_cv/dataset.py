@@ -9,8 +9,14 @@ import torchvision
 
 import submodule_cv.preprocess as preprocess
 
-class SlideExtractPatchDataset(Dataset):
-    def __init__(self, os_slide, patch_size, resize_size, color_jitter=False):
+class SlidePatchExtractor(object):
+    def __init__(self, os_slide, patch_size, resize_size):
+        '''
+        Parameters
+        ----------
+        os_slide : OpenSlide
+            OpenSlide slide to extract patches from
+        '''
         self.os_slide = os_slide
         self.patch_size = patch_size
         self.width, self.height = self.os_slide.dimensions
@@ -21,13 +27,15 @@ class SlideExtractPatchDataset(Dataset):
         return self.tile_width * self.tile_height
 
     def __getitem__(self, idx):
+        if idx >= len(self):
+            raise IndexError
         tile_x = idx % self.tile_width
         tile_y = int(idx / self.tile_width)
         x = tile_x * self.patch_size
         y = tile_y * self.patch_size
         patch = preprocess.extract_and_resize(self.os_slide,
-                x, y, self.patch_size, self.patch_size)
-        return (patch, ), (tile_x, tile_y,)
+                x, y, self.patch_size, self.resize_size)
+        return patch, (tile_x, tile_y,)
 
 
 class PatchDataset(Dataset):
@@ -75,4 +83,4 @@ class PatchDataset(Dataset):
         x = torch.from_numpy(x).type(torch.float)
 
 
-        return (x, ), torch.tensor(y)
+        return x, torch.tensor(y)
