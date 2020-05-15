@@ -27,7 +27,7 @@ class SlideExtractPatchDataset(Dataset):
         y = tile_y * self.patch_size
         patch = preprocess.extract_and_resize(self.os_slide,
                 x, y, self.patch_size, self.patch_size)
-        return (patch, ), (tile_x, tile_y,)
+        return patch, (tile_x, tile_y,)
 
 
 class PatchDataset(Dataset):
@@ -75,4 +75,4 @@ class PatchDataset(Dataset):
         x = torch.from_numpy(x).type(torch.float)
 
 
-        return (x, ), torch.tensor(y)
+        return x, torch.tensor(y)
