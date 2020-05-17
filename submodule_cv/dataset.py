@@ -19,6 +19,7 @@ class SlidePatchExtractor(object):
         '''
         self.os_slide = os_slide
         self.patch_size = patch_size
+        self.resize_size = resize_size
         self.width, self.height = self.os_slide.dimensions
         self.tile_width = int(self.width / self.patch_size)
         self.tile_height = int(self.height / self.patch_size)
