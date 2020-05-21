@@ -26,9 +26,6 @@ nvmlInit()
 class ChunkLookupException(Exception):
     pass
 
-# def build_model(model_config):
-#     return models.DeepModel(model_config)
-
 def setup_log_file(log_folder_path, log_name):
     os.makedirs(log_folder_path, exist_ok=True)
     l_path = os.path.join(log_folder_path, "log_{}.txt".format(log_name))
