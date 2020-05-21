@@ -39,6 +39,12 @@ class DeepModel(BaseModel):
         return '_'.join(n)
 
     def __init__(self, config, is_eval=False, class_weight=None, device=None):
+        """
+        TODO: very messy. Should clean this.
+        TODO: is_eval param is not being used. Should use
+        TODO: NNs should use 1 output neuron for binary classification instead of 2. Should refactor to use 1 output with last linear layer 1 output then sigmoid
+        https://stats.stackexchange.com/questions/207049/neural-network-for-binary-classification-use-1-or-2-output-neurons
+        """
         super().__init__(config)
         self.is_eval = is_eval
         self.deep_model = self.config["deep_model"]
