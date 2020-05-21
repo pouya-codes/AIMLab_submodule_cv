@@ -75,11 +75,11 @@ def raw(image, is_eval=False, apply_color_jitter=True):
     return image_tensor
 
 
-def ndarray_image_to_tensor(image, to_cuda=False):
+def ndarray_image_to_tensor(image):
     image = (image - 128.) / 128.
     image = image.transpose(2, 0, 1)
     tensor_image = torch.from_numpy(image).type(torch.float)
-    return tensor_image.cuda() if to_cuda else tensor_image
+    return tensor_image
 
 
 def pillow_image_to_ndarray(image, color_jitter=False):

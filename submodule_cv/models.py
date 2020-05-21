@@ -38,7 +38,7 @@ class DeepModel(BaseModel):
 
         return '_'.join(n)
 
-    def __init__(self, config, is_eval=False, class_weight=None):
+    def __init__(self, config, is_eval=False, class_weight=None, device=None):
         super().__init__(config)
         self.is_eval = is_eval
         self.deep_model = self.config["deep_model"]
@@ -55,12 +55,19 @@ class DeepModel(BaseModel):
             num_features = model.fc.in_features
             model.fc = torch.nn.Linear(num_features, self.config["num_subtypes"])
 
-        self.model = model.cuda()
+        if device:
+            self.model = model.to(device)
+        else:
+            self.model = model.cuda()
 
         if not self.is_eval:
             if self.use_weighted_loss:
+                if device:
+                    weight = torch.from_numpy(self.class_weight).to(device)
+                else:
+                    weight = torch.from_numpy(self.class_weight).cuda()
                 self.criterion = torch.nn.CrossEntropyLoss(
-                    reduction='mean', weight=torch.from_numpy(self.class_weight).cuda())
+                    reduction='mean', weight=weight)
                 #self.criterion = torch.nn.BCEWithLogitsLoss(
                 #    reduction='mean', weight=torch.from_numpy(self.class_weight).cuda())
             else:
@@ -71,10 +78,10 @@ class DeepModel(BaseModel):
         self.optimizer = optimizer(model.parameters(), **self.config["optimizer"]["parameters"])
 
         if self.continue_train:
-            self.load_state(config["load_deep_model_id"])
+            self.load_state(config["load_deep_model_id"], device=device)
 
         if self.is_eval:
-            self.load_state(config["load_deep_model_id"])
+            self.load_state(config["load_deep_model_id"], device=device)
             self.model = self.model.eval()
 
     def forward(self, input_data):
@@ -112,8 +119,10 @@ class DeepModel(BaseModel):
     def get_current_errors(self):
         return self.loss.item()
 
-    def load_state(self, save_path):
-        if not torch.cuda.is_available():
+    def load_state(self, save_path, device=None):
+        if device:
+            state = torch.load(save_path, map_location=device)
+        elif not torch.cuda.is_available():
             state = torch.load(save_path, map_location='cpu')
         else:
             state = torch.load(save_path)

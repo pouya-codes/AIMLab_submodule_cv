@@ -35,6 +35,16 @@ def setup_log_file(log_folder_path, log_name):
     sys.stdout = logger.Logger(l_path)
 
 def gpu_selector(gpu_to_use=-1):
+    """
+
+    Returns
+    -------
+    int
+        The GPU device to use
+
+    TODO: it does not make sense to set CUDA_VISIBLE_DEVICES when PyTorch is already imported.
+    Must use another way to set GPU device. This could be refactored...
+    """
     gpu_to_use = -1 if gpu_to_use == None else gpu_to_use
     deviceCount = nvmlDeviceGetCount()
     if gpu_to_use < 0:
@@ -88,14 +98,14 @@ class PatchHanger(object):
         '''
         return utils.load_json(self.model_config_location)
     
-    def build_model(self):
+    def build_model(self, device=None):
         '''Builds model by reading file specified in model config path
 
         Returns
         -------
         models.DeepModel
         '''
-        return models.DeepModel(self.load_model_config())
+        return models.DeepModel(self.load_model_config(), device=device)
 
     def load_chunks(self, chunk_ids):
         """Load patch paths from specified chunks in chunk file
