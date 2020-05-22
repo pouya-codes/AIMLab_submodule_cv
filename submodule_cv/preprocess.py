@@ -87,6 +87,15 @@ def pillow_image_to_ndarray(image, color_jitter=False):
             else np.asarray(image).copy()
 
 
+def extract(slide, location_width, location_height, extract_size):
+    return slide.read_region(
+        (location_width, location_height), 0, (extract_size, extract_size)).convert('RGB')
+
+
+def resize(patch, resize_size):
+    return patch.resize((resize_size, resize_size), resample=Image.LANCZOS)
+
+
 def extract_and_resize(slide, location_width, location_height, extract_size, resize_size):
     """Function to extract a patch from slide at (location_width, location_height) and then resize
         using Lanczos resampling filter

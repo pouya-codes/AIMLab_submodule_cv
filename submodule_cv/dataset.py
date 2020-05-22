@@ -10,16 +10,22 @@ import torchvision
 import submodule_cv.preprocess as preprocess
 
 class SlidePatchExtractor(object):
-    def __init__(self, os_slide, patch_size, resize_size):
+    def __init__(self, os_slide, patch_size, resize_sizes=None):
         '''
         Parameters
         ----------
         os_slide : OpenSlide
             OpenSlide slide to extract patches from
+
+        patch_size : int
+            The size of the patch to extract
+        
+        resize_sizes : list of int
+            A list of multiple sizes to resize
         '''
         self.os_slide = os_slide
         self.patch_size = patch_size
-        self.resize_size = resize_size
+        self.resize_sizes = resize_sizes
         self.width, self.height = self.os_slide.dimensions
         self.tile_width = int(self.width / self.patch_size)
         self.tile_height = int(self.height / self.patch_size)
@@ -34,10 +40,19 @@ class SlidePatchExtractor(object):
         tile_y = int(idx / self.tile_width)
         x = tile_x * self.patch_size
         y = tile_y * self.patch_size
-        patch = preprocess.extract_and_resize(self.os_slide,
-                x, y, self.patch_size, self.resize_size)
-        return patch, (tile_x, tile_y,)
-
+        patch = preprocess.extract(self.os_slide, x, y, self.patch_size)
+        # patch = preprocess.extract_and_resize(self.os_slide,
+        #         x, y, self.patch_size, self.resize_size)
+        if self.resize_sizes:
+            resized_patches = { }
+            for resize_size in self.resize_sizes:
+                if resize_size == self.patch_size:
+                    resized_patches[resize_size] = patch
+                else:
+                    resized_patches[resize_size] = preprocess.resize(patch, resize_size)
+            return patch, (tile_x, tile_y,), resized_patches
+        else:
+            return patch, (tile_x, tile_y,)
 
 class PatchDataset(Dataset):
     def __init__(self, x_set, y_set, transform=None, color_jitter=False):
