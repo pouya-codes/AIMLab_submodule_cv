@@ -51,4 +51,4 @@ class PatchDataset(Dataset):
         x = numpy.asarray(x).copy().transpose(2, 0, 1)
         x = (x - 128.) / 128.
         x = torch.from_numpy(x).type(torch.float)
-        return x, torch.tensor(y)
+        return x, torch.tensor(y), self.x_set[idx]
