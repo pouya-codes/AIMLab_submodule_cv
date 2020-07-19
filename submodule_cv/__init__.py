@@ -59,7 +59,7 @@ def gpu_selector(gpu_to_use=-1):
     return gpu_to_use
 
 class PatchHanger(object):
-    '''Hanger with functionality to create torch data loaders for patch dataset
+    """Hanger with functionality to create torch data loaders for patch dataset
 
     Attributes
     ----------
@@ -83,7 +83,7 @@ class PatchHanger(object):
     
     model_config_location : str
         Path to model config JSON (i.e. /path/to/model_config.json).
-    '''
+    """
 
     def load_model_config(self):
         '''Load the model config JSON file as a dict

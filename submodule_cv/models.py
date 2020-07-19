@@ -119,7 +119,6 @@ class DeepModel(BaseModel):
         self.loss.backward()
         self.optimizer.step()
         self.optimizer.zero_grad()
-
         return self.loss.item()
 
     def get_current_errors(self):
