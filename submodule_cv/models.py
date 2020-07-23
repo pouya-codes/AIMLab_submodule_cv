@@ -57,6 +57,8 @@ class DeepModel(BaseModel):
         # when using vgg vs resnet/inception
         if 'vgg' in self.deep_model:
             model.classifier._modules['6'] = torch.nn.Linear(4096, self.config["num_subtypes"])
+        elif 'mobilenet' in self.deep_model:
+            model.classifier[1] = torch.nn.Linear(in_features=model.classifier[1].in_features, out_features=self.config["num_subtypes"])
         else:
             num_features = model.fc.in_features
             model.fc = torch.nn.Linear(num_features, self.config["num_subtypes"])
