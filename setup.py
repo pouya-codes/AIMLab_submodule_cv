@@ -10,14 +10,15 @@ install_requires=[
         'scikit-image',
         'scikit-learn',
         'torch',
-        'torchvision']
+        'torchvision',
+        'EfficientNet']
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
     name="submodule_cv",
-    version="0.0.1",
+    version="0.0.2",
     author="AIM Lab",
     author_email="colinc@fastmail.com",
     description="Submodule for Computer Vision",

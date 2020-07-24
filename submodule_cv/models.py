@@ -1,6 +1,11 @@
 import torchvision.models as models
+from efficientnet_pytorch import EfficientNet
 import torch
 import os
+
+import numpy as np
+import torch
+
 
 class BaseModel():
     def name(self):
@@ -50,18 +55,23 @@ class DeepModel(BaseModel):
         self.deep_model = self.config["deep_model"]
         self.class_weight = class_weight if self.use_weighted_loss else None
 
-        model = getattr(models, self.deep_model)
-        model = model(**self.config["parameters"])
+        # using efficientnet
+        if ("efficientnet") in self.deep_model:
+            model = EfficientNet.from_pretrained("efficientnet-b0", num_classes=self.config["num_subtypes"])
 
-        # Modified the original HACK! part into an if condition to avoid the need to comment/uncomment lines
-        # when using vgg vs resnet/inception
-        if 'vgg' in self.deep_model:
-            model.classifier._modules['6'] = torch.nn.Linear(4096, self.config["num_subtypes"])
-        elif 'mobilenet' in self.deep_model:
-            model.classifier[1] = torch.nn.Linear(in_features=model.classifier[1].in_features, out_features=self.config["num_subtypes"])
-        else:
-            num_features = model.fc.in_features
-            model.fc = torch.nn.Linear(num_features, self.config["num_subtypes"])
+        else :
+            model = getattr(models, self.deep_model)
+            model = model(**self.config["parameters"])
+
+            # Modified the original HACK! part into an if condition to avoid the need to comment/uncomment lines
+            # when using vgg vs resnet/inception
+            if 'vgg' in self.deep_model:
+                model.classifier._modules['6'] = torch.nn.Linear(4096, self.config["num_subtypes"])
+            elif 'mobilenet' in self.deep_model:
+                model.classifier[1] = torch.nn.Linear(in_features=model.classifier[1].in_features, out_features=self.config["num_subtypes"])
+            else:
+                num_features = model.fc.in_features
+                model.fc = torch.nn.Linear(num_features, self.config["num_subtypes"])
 
         if device:
             self.model = model.to(device)
