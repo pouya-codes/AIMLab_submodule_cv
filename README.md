@@ -31,5 +31,6 @@ git push -u origin master
  ```shell script
 #To pull changes from the original :
 git pull sync master
-git push -u origin master
+#To push changes to the synced :
+git push 
 ```
