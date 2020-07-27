@@ -21,8 +21,8 @@ class PatchDataset(Dataset):
         """
         self.x_set = x_set
         self.y_set = y_set
-        self.is_pretrained = model_config['pretrained']
-        if (self.is_pretrained):
+        self.normalize = model_config['normalize']
+        if (self.normalize):
             self.transform = transforms.Compose([transforms.ToTensor(),
                                                  transforms.Normalize(mean=model_config['mean'],
                                                                       std=model_config['std'])])
@@ -42,10 +42,10 @@ class PatchDataset(Dataset):
         #x = x.transpose(2, 0, 1) #if x is np array and it has format Width * Height * Channel
         y = self.y_set[idx]
 
-        if self.is_pretrained:
+        if self.normalize:
             x = self.transform(x)
         else :
             x = numpy.asarray(x).copy().transpose(2, 0, 1)
-            x = (x - 128.) / 128.
+            x = (x - 128.) / 128. # must be in [-1, 1] range
             x = torch.from_numpy(x).type(torch.float)
         return x, torch.tensor(y), self.x_set[idx]
