@@ -11,7 +11,7 @@ import torchvision
 
 
 class PatchDataset(Dataset):
-    def __init__(self, x_set, y_set, model_config):
+    def __init__(self, x_set, y_set, model_config=None):
 
         """
         Args:
@@ -21,11 +21,14 @@ class PatchDataset(Dataset):
         """
         self.x_set = x_set
         self.y_set = y_set
-        self.normalize = model_config['normalize']
-        if (self.normalize):
-            self.transform = transforms.Compose([transforms.ToTensor(),
-                                                 transforms.Normalize(mean=model_config['mean'],
-                                                                      std=model_config['std'])])
+        if model_config :
+            self.normalize = model_config['normalize']
+            if (self.normalize):
+                self.transform = transforms.Compose([transforms.ToTensor(),
+                                                     transforms.Normalize(mean=model_config['mean'],
+                                                                          std=model_config['std'])])
+        else:
+            self.normalize= False
 
         self.length = len(x_set)
         if len(x_set) != len(y_set):
