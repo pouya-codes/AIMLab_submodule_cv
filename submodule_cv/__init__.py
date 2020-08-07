@@ -38,10 +38,12 @@ def gpu_selector(gpu_to_use=-1, number_of_gpus=1):
     list(int)
         A list of GPU(s) device(s) to use
     """
+
     gpu_to_use = -1 if gpu_to_use == None else gpu_to_use
     if gpu_to_use < 0 :
         deviceCount = nvmlDeviceGetCount()
         number_of_gpus = min(number_of_gpus, deviceCount)
+        print(torch.cuda.device_count())
         print(f"Auto selecting {number_of_gpus} GPU(s) from exising {deviceCount} GPU(s)")
         list_of_gpus = np.argsort([nvmlDeviceGetMemoryInfo(handle).free for handle in
                                    [nvmlDeviceGetHandleByIndex(gpu_id) for gpu_id in range(deviceCount) ]])[-number_of_gpus:][::-1]
