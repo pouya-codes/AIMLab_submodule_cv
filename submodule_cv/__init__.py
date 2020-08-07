@@ -31,32 +31,24 @@ def setup_log_file(log_folder_path, log_name):
     l_path = os.path.join(log_folder_path, "log_{}.txt".format(log_name))
     sys.stdout = logger.Logger(l_path)
 
-def gpu_selector(gpu_to_use=-1):
+def gpu_selector(gpu_to_use=-1, number_of_gpus=1):
     """
-
     Returns
     -------
-    int
-        The GPU device to use
-
-    TODO: it does not make sense to set CUDA_VISIBLE_DEVICES when PyTorch is already imported.
-    Must use another way to set GPU device. This could be refactored...
+    list(int)
+        A list of GPU(s) device(s) to use
     """
     gpu_to_use = -1 if gpu_to_use == None else gpu_to_use
-    deviceCount = nvmlDeviceGetCount()
-    if gpu_to_use < 0:
-        print("Auto selecting GPU") 
-        gpu_free_mem = 0
-        for i in range(deviceCount):
-            handle = nvmlDeviceGetHandleByIndex(i)
-            mem_usage = nvmlDeviceGetMemoryInfo(handle)
-            if gpu_free_mem < mem_usage.free:
-                gpu_to_use = i
-                gpu_free_mem = mem_usage.free
-            print("GPU: {} \t Free Memory: {}".format(i, mem_usage.free))
-    print("Using GPU {}".format(gpu_to_use))
-    os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_to_use)
-    return gpu_to_use
+    if gpu_to_use < 0 :
+        deviceCount = nvmlDeviceGetCount()
+        number_of_gpus = min(number_of_gpus, deviceCount)
+        print(f"Auto selecting {number_of_gpus} GPU(s) from exising {deviceCount} GPU(s)")
+        list_of_gpus = np.argsort([nvmlDeviceGetMemoryInfo(handle).free for handle in
+                                   [nvmlDeviceGetHandleByIndex(gpu_id) for gpu_id in range(deviceCount) ]])[-number_of_gpus:][::-1]
+        print(f"Using GPU(s): {list_of_gpus}")
+        return list_of_gpus
+    else:
+        return [gpu_to_use]
 
 class PatchHanger(object):
     """Hanger with functionality to create torch data loaders for patch dataset
