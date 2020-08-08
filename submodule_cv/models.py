@@ -73,8 +73,11 @@ class DeepModel(BaseModel):
                 num_features = model.fc.in_features
                 model.fc = torch.nn.Linear(num_features, self.config["num_subtypes"])
 
-        if device:
-            self.model = model.to(device)
+        print(model)
+        if device is not None:
+            if len(device)>1 :
+                self.model = torch.nn.DataParallel(model, device_ids=device).cuda()
+            self.model = model.to(f'cuda:{device[0]}')
         else:
             self.model = model.cuda()
 
