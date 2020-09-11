@@ -77,7 +77,10 @@ class DeepModel(BaseModel):
         if device is not None:
             if len(device)>1 :
                 self.model = torch.nn.DataParallel(model, device_ids=device).cuda()
-            self.model = model.to(f'cuda:{device[0]}')
+            try :
+                self.model = model.to(f'cuda:{device[0]}')
+            except: 
+                self.model = model.to(f'cuda:0')
         else:
             self.model = model.cuda()
 
