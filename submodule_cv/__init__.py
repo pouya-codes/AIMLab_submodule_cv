@@ -40,14 +40,16 @@ def gpu_selector(gpu_to_use=-1, number_of_gpus=1):
     """
     gpu_to_use = -1 if gpu_to_use == None else gpu_to_use
     if gpu_to_use < 0 :
-        deviceCount = torch.cuda.device_count()
+        deviceCount = nvmlDeviceGetCount()
         number_of_gpus = min(number_of_gpus, deviceCount)
         print(f"Auto selecting {number_of_gpus} GPU(s) from exising {deviceCount} GPU(s)")
         list_of_gpus = np.argsort([nvmlDeviceGetMemoryInfo(handle).free for handle in
                                    [nvmlDeviceGetHandleByIndex(gpu_id) for gpu_id in range(deviceCount) ]])[-number_of_gpus:][::-1]
         print(f"Using GPU(s): {list_of_gpus}")
+        os.environ["CUDA_VISIBLE_DEVICES"] = ','.join(str(x) for x in list_of_gpus)
         return list_of_gpus
     else:
+        os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_to_use)
         return [gpu_to_use]
 
 class PatchHanger(object):
@@ -94,7 +96,7 @@ class PatchHanger(object):
         -------
         models.DeepModel
         '''
-        return models.DeepModel(self.load_model_config(), device=device)
+        return models.DeepModel(self.load_model_config())
 
     def load_chunks(self, chunk_ids):
         """Load patch paths from specified chunks in chunk file
