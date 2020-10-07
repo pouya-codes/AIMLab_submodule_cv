@@ -57,7 +57,7 @@ class DeepModel(BaseModel):
 
         # using efficientnet
         if ("efficientnet") in self.deep_model:
-            model = EfficientNet.from_pretrained("efficientnet-b0", num_classes=self.config["num_subtypes"])
+            model = EfficientNet.from_pretrained(self.deep_model, num_classes=self.config["num_subtypes"])
 
         else :
             model = getattr(models, self.deep_model)
