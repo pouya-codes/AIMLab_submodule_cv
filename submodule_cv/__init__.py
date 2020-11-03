@@ -146,10 +146,10 @@ class PatchHanger(object):
     def extract_labels(self, patch_paths):
         return list(map(self.extract_label_from_patch, patch_paths))
 
-    def create_data_loader(self, chunk_ids, shuffle=False):
+    def create_data_loader(self, chunk_ids, shuffle=False, training_set=False):
         patch_paths = self.load_chunks(chunk_ids)
         labels = self.extract_labels(patch_paths)
-        patch_dataset = PatchDataset(patch_paths, labels, self.model_config['normalize'] if "normalize" in self.model_config else None)
+        patch_dataset = PatchDataset(patch_paths, labels, self.model_config['normalize'] if "normalize" in self.model_config else None, training_set)
         return DataLoader(patch_dataset, batch_size=self.batch_size, 
                 shuffle=shuffle, num_workers=self.num_patch_workers)
 
