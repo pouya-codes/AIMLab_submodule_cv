@@ -11,7 +11,7 @@ import torchvision
 
 
 class PatchDataset(Dataset):
-    def __init__(self, x_set, y_set, model_config=None):
+    def __init__(self, x_set, y_set, model_config=None, training_set=False):
 
         """
         Args:
@@ -21,12 +21,26 @@ class PatchDataset(Dataset):
         """
         self.x_set = x_set
         self.y_set = y_set
+        self.training_set = training_set
+
         if model_config :
             self.normalize = model_config['normalize']
+            self.augmentation = model_config['augmentation'] if 'augmentation' in model_config else False
+            transforms_array = [transforms.ToTensor()]
             if (self.normalize):
-                self.transform = transforms.Compose([transforms.ToTensor(),
-                                                     transforms.Normalize(mean=model_config['mean'],
-                                                                          std=model_config['std'])])
+                transforms_array.append(transforms.Normalize(mean=model_config['mean'], std=model_config['std']))
+                # self.transform = transforms.Compose([transforms.ToTensor(),
+                #                                      transforms.Normalize(mean=model_config['mean'],
+                #                                                           std=model_config['std'])])
+            if (self.augmentation and self.training_set) :
+                transforms_array.append([
+                transforms.ColorJitter(hue=.05, saturation=.05),
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomRotation(20, resample=Image.BILINEAR)
+                ])
+                print("augemntation is on",flush=True)
+            if (self.normalize or self.augmentation) :
+                self.transform = transforms.Compose(transforms_array)
         else:
             self.normalize= False
 
@@ -45,7 +59,7 @@ class PatchDataset(Dataset):
         #x = x.transpose(2, 0, 1) #if x is np array and it has format Width * Height * Channel
         y = self.y_set[idx]
 
-        if self.normalize:
+        if self.normalize or (self.augmentation and not self.training_set):
             x = self.transform(x)
         else :
             x = numpy.asarray(x).copy().transpose(2, 0, 1)
