@@ -21,28 +21,32 @@ class PatchDataset(Dataset):
         """
         self.x_set = x_set
         self.y_set = y_set
+        
         self.training_set = training_set
-
         if model_config :
-            self.normalize = model_config['normalize']
-            self.augmentation = model_config['augmentation'] if 'augmentation' in model_config else False
-            transforms_array = [transforms.ToTensor()]
-            if (self.normalize):
-                transforms_array.append(transforms.Normalize(mean=model_config['mean'], std=model_config['std']))
-                # self.transform = transforms.Compose([transforms.ToTensor(),
-                #                                      transforms.Normalize(mean=model_config['mean'],
-                #                                                           std=model_config['std'])])
-            if (self.augmentation and self.training_set) :
-                transforms_array.append([
-                transforms.ColorJitter(hue=.05, saturation=.05),
-                transforms.RandomHorizontalFlip(),
-                transforms.RandomRotation(20, resample=Image.BILINEAR)
-                ])
-                print("augemntation is on",flush=True)
-            if (self.normalize or self.augmentation) :
-                self.transform = transforms.Compose(transforms_array)
+            self.normalize = True if 'normalize' in model_config and model_config['normalize']['normalize'] else False
+            self.augmentation = True if 'augmentation' in model_config and model_config['augmentation'] else False
         else:
             self.normalize= False
+            self.augmentation= False
+
+        transforms_array = []
+        if (self.augmentation and self.training_set) :
+            transforms_array.extend([
+            transforms.ColorJitter(hue=.05, saturation=.05),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomRotation(20, resample=Image.BILINEAR)
+            ])
+        transforms_array.append(transforms.ToTensor())    
+        if (self.normalize):
+            transforms_array.append(transforms.Normalize(mean=model_config['normalize']['mean'], std=model_config['normalize']['std']))
+        else :
+            transforms_array.append(transforms.Normalize((0.5,0.5,0.5), (0.5,0.5,0.5)))
+            
+        # if (self.normalize or self.augmentation) :
+        self.transform = transforms.Compose(transforms_array)
+        print (self.transform)
+            
 
         self.length = len(x_set)
         if len(x_set) != len(y_set):
@@ -59,10 +63,9 @@ class PatchDataset(Dataset):
         #x = x.transpose(2, 0, 1) #if x is np array and it has format Width * Height * Channel
         y = self.y_set[idx]
 
-        if self.normalize or (self.augmentation and not self.training_set):
-            x = self.transform(x)
-        else :
-            x = numpy.asarray(x).copy().transpose(2, 0, 1)
-            x = (x - 128.) / 128. # must be in [-1, 1] range
-            x = torch.from_numpy(x).type(torch.float)
+        x = self.transform(x)
+        # else :
+            # x = numpy.asarray(x).copy().transpose(2, 0, 1)
+            # x = (x - 128.) / 128. # must be in [-1, 1] range
+            # x = torch.from_numpy(x).type(torch.float)
         return x, torch.tensor(y), self.x_set[idx]
