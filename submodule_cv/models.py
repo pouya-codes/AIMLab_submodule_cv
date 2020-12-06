@@ -62,6 +62,7 @@ class DeepModel(BaseModel):
         else :
             model = getattr(models, self.deep_model)
             model = model(**self.config["parameters"])
+            set_parameter_requires_grad(model, self.config["feature_extract"])
 
             # Modified the original HACK! part into an if condition to avoid the need to comment/uncomment lines
             # when using vgg vs resnet/inception
@@ -69,8 +70,6 @@ class DeepModel(BaseModel):
                 model.classifier._modules['6'] = torch.nn.Linear(4096, self.config["num_subtypes"])
             elif 'mobilenet' in self.deep_model:
                 model.classifier[1] = torch.nn.Linear(in_features=model.classifier[1].in_features, out_features=self.config["num_subtypes"])
-            elif 'squeezenet' in self.deep_model:
-                model.classifier[1] = torch.nn.Conv2d(512, self.config["num_subtypes"], kernel_size=(1,1), stride=(1,1))
             else:
                 num_features = model.fc.in_features
                 model.fc = torch.nn.Linear(num_features, self.config["num_subtypes"])
@@ -96,8 +95,21 @@ class DeepModel(BaseModel):
                 self.criterion = torch.nn.CrossEntropyLoss(reduction='mean')
                 #self.criterion = torch.nn.BCEWithLogitsLoss(reduction='mean')
 
+        params_to_update = model.parameters()
+        print("Parameters to learn:")
+        if self.config["feature_extract"]:
+            params_to_update = []
+            for name,param in model.named_parameters():
+                if param.requires_grad == True:
+                    params_to_update.append(param)
+                    print("\t", name)
+        else:
+            for name,param in model.named_parameters():
+                if param.requires_grad == True:
+                    print("\t", name)
+
         optimizer = getattr(torch.optim, self.config["optimizer"]["type"])
-        self.optimizer = optimizer(model.parameters(), **self.config["optimizer"]["parameters"])
+        self.optimizer = optimizer(params_to_update, **self.config["optimizer"]["parameters"])
 
         if self.continue_train:
             self.load_state(config["load_deep_model_id"], device=device)
@@ -105,6 +117,11 @@ class DeepModel(BaseModel):
         if self.is_eval:
             self.load_state(config["load_deep_model_id"], device=device)
             self.model = self.model.eval()
+    
+    def set_parameter_requires_grad(model, feature_extracting):
+        if feature_extracting:
+            for param in model.parameters():
+                param.requires_grad = False
 
     def forward(self, input_data):
         output = self.model.forward(input_data)
