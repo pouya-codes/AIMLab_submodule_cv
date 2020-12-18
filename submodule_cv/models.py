@@ -62,6 +62,9 @@ class DeepModel(BaseModel):
         else :
             model = getattr(models, self.deep_model)
             model = model(**self.config["parameters"])
+i           if self.config["feature_extract"]: 
+                for param in model.parameters():
+                    param.requires_grad = False
 
             # Modified the original HACK! part into an if condition to avoid the need to comment/uncomment lines
             # when using vgg vs resnet/inception
@@ -94,8 +97,21 @@ class DeepModel(BaseModel):
                 self.criterion = torch.nn.CrossEntropyLoss(reduction='mean')
                 #self.criterion = torch.nn.BCEWithLogitsLoss(reduction='mean')
 
+        params_to_update = model.parameters()
+        print("Parameters to learn:")
+        if self.config["feature_extract"]:
+            params_to_update = []
+            for name,param in model.named_parameters():
+                if param.requires_grad == True:
+                    params_to_update.append(param)
+                    print("\t", name)
+        else:
+            for name,param in model.named_parameters():
+                if param.requires_grad == True:
+                    print("\t", name)
+
         optimizer = getattr(torch.optim, self.config["optimizer"]["type"])
-        self.optimizer = optimizer(model.parameters(), **self.config["optimizer"]["parameters"])
+        self.optimizer = optimizer(params_to_update, **self.config["optimizer"]["parameters"])
 
         if self.continue_train:
             self.load_state(config["load_deep_model_id"], device=device)
@@ -103,6 +119,7 @@ class DeepModel(BaseModel):
         if self.is_eval:
             self.load_state(config["load_deep_model_id"], device=device)
             self.model = self.model.eval()
+    
 
     def forward(self, input_data):
         output = self.model.forward(input_data)
