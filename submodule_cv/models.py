@@ -62,7 +62,7 @@ class DeepModel(BaseModel):
         else :
             model = getattr(models, self.deep_model)
             model = model(**self.config["parameters"])
-            if self.config["feature_extract"]: 
+            if "feature_extract" in self.config and self.config["feature_extract"]: 
                 for param in model.parameters():
                     param.requires_grad = False
 
@@ -99,7 +99,7 @@ class DeepModel(BaseModel):
 
         params_to_update = model.parameters()
         print("Parameters to learn:")
-        if self.config["feature_extract"]:
+        if "feature_extract" in self.config and self.config["feature_extract"]:
             params_to_update = []
             for name,param in model.named_parameters():
                 if param.requires_grad == True:
