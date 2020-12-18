@@ -62,7 +62,7 @@ class DeepModel(BaseModel):
         else :
             model = getattr(models, self.deep_model)
             model = model(**self.config["parameters"])
-i           if self.config["feature_extract"]: 
+            if self.config["feature_extract"]: 
                 for param in model.parameters():
                     param.requires_grad = False
 
