@@ -62,7 +62,9 @@ class DeepModel(BaseModel):
         else :
             model = getattr(models, self.deep_model)
             model = model(**self.config["parameters"])
-            set_parameter_requires_grad(model, self.config["feature_extract"])
+i           if self.config["feature_extract"]: 
+                for param in model.parameters():
+                    param.requires_grad = False
 
             # Modified the original HACK! part into an if condition to avoid the need to comment/uncomment lines
             # when using vgg vs resnet/inception
@@ -118,10 +120,6 @@ class DeepModel(BaseModel):
             self.load_state(config["load_deep_model_id"], device=device)
             self.model = self.model.eval()
     
-    def set_parameter_requires_grad(model, feature_extracting):
-        if feature_extracting:
-            for param in model.parameters():
-                param.requires_grad = False
 
     def forward(self, input_data):
         output = self.model.forward(input_data)
