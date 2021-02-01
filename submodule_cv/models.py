@@ -62,7 +62,7 @@ class DeepModel(BaseModel):
         else :
             model = getattr(models, self.deep_model)
             model = model(**self.config["parameters"])
-            if "feature_extract" in self.config and self.config["feature_extract"]: 
+            if "feature_extract" in self.config and self.config["feature_extract"]:
                 for param in model.parameters():
                     param.requires_grad = False
 
@@ -81,7 +81,10 @@ class DeepModel(BaseModel):
             self.model = torch.nn.DataParallel(model, device_ids=range(0,len(device))).cuda()
             self.model = model.to(f'cuda:0')
         else:
-            self.model = model.cuda()
+            if torch.cuda.is_available():
+                self.model = model.cuda()
+            else:
+                self.model = model
 
         if not self.is_eval:
             if self.use_weighted_loss:
@@ -119,7 +122,7 @@ class DeepModel(BaseModel):
         if self.is_eval:
             self.load_state(config["load_deep_model_id"], device=device)
             self.model = self.model.eval()
-    
+
 
     def forward(self, input_data):
         output = self.model.forward(input_data)
@@ -128,7 +131,7 @@ class DeepModel(BaseModel):
             logits = output.logits
         else:
             logits = output
-            
+
         probs = torch.softmax(logits, dim=1)
         return logits, probs, output
 

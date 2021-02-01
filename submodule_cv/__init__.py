@@ -21,7 +21,8 @@ import submodule_cv.models as models
 # Folder permission mode
 p_mode = 0o777
 oldmask = os.umask(000)
-nvmlInit()
+if torch.cuda.is_available():
+    nvmlInit()
 
 class ChunkLookupException(Exception):
     pass
@@ -74,7 +75,7 @@ class PatchHanger(object):
 
     chunk_file_location : str
         File path of group or split file (aka. chunks) to use (i.e. /path/to/patient_3_groups.json).
-    
+
     model_config_location : str
         Path to model config JSON (i.e. /path/to/model_config.json).
     """
@@ -88,7 +89,7 @@ class PatchHanger(object):
             The model config
         '''
         return utils.load_json(self.model_config_location)
-    
+
     def build_model(self, device=None):
         '''Builds model by reading file specified in model config path
 
@@ -122,7 +123,7 @@ class PatchHanger(object):
             raise ChunkLookupException(
                     f"chunks {tuple(chunk_ids)} not found in {self.chunk_file_location}")
         return patch_paths
-        
+
     def extract_label_from_patch(self, patch_path):
         """Get the label value according to CategoryEnum from the patch path
 
@@ -150,7 +151,7 @@ class PatchHanger(object):
         patch_paths = self.load_chunks(chunk_ids)
         labels = self.extract_labels(patch_paths)
         patch_dataset = PatchDataset(patch_paths, labels, self.model_config, training_set)
-        return DataLoader(patch_dataset, batch_size=self.batch_size, 
+        return DataLoader(patch_dataset, batch_size=self.batch_size,
                 shuffle=shuffle, num_workers=self.num_patch_workers)
 
 # https://github.com/Bjarten/early-stopping-pytorch/blob/master/pytorchtools.py
@@ -188,4 +189,3 @@ class EarlyStopping:
         else:
             self.best_score = score
             self.counter = 0
-
