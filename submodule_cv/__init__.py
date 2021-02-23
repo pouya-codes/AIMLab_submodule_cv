@@ -148,35 +148,7 @@ class PatchHanger(object):
     def extract_labels(self, patch_paths):
         return list(map(self.extract_label_from_patch, patch_paths))
 
-    def get_class_distribution(self, labels):
-        count_dict = {k: 0 for k in labels}
-        for element in labels:
-            count_dict[element] += 1
-        return count_dict
-
-    def create_data_loader(self, chunk_ids, shuffle=False, training_set=False, weighted_sampler=False):
-        patch_paths = self.load_chunks(chunk_ids)
-        labels = self.extract_labels(patch_paths)
-        patch_dataset = PatchDataset(patch_paths, labels, self.model_config, training_set)
-        sampler = None
-        if (training_set and weighted_sampler):
-            target_list = torch.tensor(labels)
-            target_list = target_list[torch.randperm(len(target_list))]
-            class_count = [i for i in self.get_class_distribution(labels).values()]
-            class_weights = 1. / torch.tensor(class_count, dtype=torch.float)
-            class_weights_all = class_weights[target_list]
-            sampler = WeightedRandomSampler(
-                weights=class_weights_all,
-                num_samples=len(class_weights_all),
-                replacement=True
-            )
-
-
-        return DataLoader(patch_dataset, batch_size=self.batch_size, sampler= sampler,
-                shuffle=shuffle, num_workers=self.num_patch_workers)
-
     def calculate_sample_weights(self, labels):
-
         values, counts = np.unique(labels, return_counts=True)
         class_weight = {}
         for idx, label in enumerate(values):
