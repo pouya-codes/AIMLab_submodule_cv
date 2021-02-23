@@ -1,5 +1,6 @@
 import torchvision.models as models
 from efficientnet_pytorch import EfficientNet
+import torch.nn as nn
 import torch
 import os
 
@@ -15,6 +16,8 @@ class BaseModel():
         self.config = config
         self.use_weighted_loss = config["use_weighted_loss"]
         self.continue_train = config["continue_train"]
+        self.freeze = True if "freeze" in config and config["freeze"]!=-1 else False
+        self.trainable_layer_num = config["freeze"] if self.freeze else None
 
     def forward(self):
         pass
@@ -88,10 +91,7 @@ class DeepModel(BaseModel):
 
         if not self.is_eval:
             if self.use_weighted_loss:
-                if device:
-                    weight = torch.from_numpy(self.class_weight).to(device)
-                else:
-                    weight = torch.from_numpy(self.class_weight).cuda()
+                weight = torch.Tensor(self.class_weight).cuda()
                 self.criterion = torch.nn.CrossEntropyLoss(
                     reduction='mean', weight=weight)
                 #self.criterion = torch.nn.BCEWithLogitsLoss(
@@ -100,15 +100,20 @@ class DeepModel(BaseModel):
                 self.criterion = torch.nn.CrossEntropyLoss(reduction='mean')
                 #self.criterion = torch.nn.BCEWithLogitsLoss(reduction='mean')
 
-        params_to_update = model.parameters()
         print("Parameters to learn:")
-        if "feature_extract" in self.config and self.config["feature_extract"]:
+        if self.freeze:
+            for param in model.parameters():
+                param.requires_grad = False
+            rev_child = reversed(list(model.children()))
+            self.freeze_layers(rev_child, self.trainable_layer_num)
+
             params_to_update = []
             for name,param in model.named_parameters():
                 if param.requires_grad == True:
                     params_to_update.append(param)
                     print("\t", name)
         else:
+            params_to_update = model.parameters()
             for name,param in model.named_parameters():
                 if param.requires_grad == True:
                     print("\t", name)
@@ -134,6 +139,21 @@ class DeepModel(BaseModel):
 
         probs = torch.softmax(logits, dim=1)
         return logits, probs, output
+
+    def freeze_layers(self, rev_child, num):
+        for layer in rev_child:
+            if num > 0:
+                if isinstance(layer, nn.Sequential) or \
+                   isinstance(layer, models.resnet.BasicBlock) or \
+                   isinstance(layer, models.resnet.Bottleneck) or \
+                   isinstance(layer, models.squeezenet.Fire):
+                    num = self.freeze_layers(reversed(list(layer.children())), num)
+                else:
+                    if sum(p.numel() for p in layer.parameters())!=0:
+                        for param in layer.parameters():
+                            param.requires_grad = True
+                        num -= 1
+        return num
 
     def get_loss(self, logits, labels, output=None):
         if type(output).__name__ == 'GoogLeNetOutputs':

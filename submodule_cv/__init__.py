@@ -11,8 +11,8 @@ import numpy as np
 import torch
 import torchvision
 from sklearn.metrics import accuracy_score
-from torch.utils.data import Dataset, DataLoader
-
+from torch.utils.data import Dataset, DataLoader, , WeightedRandomSampler
+from submodule_cv.sampler import BalancedBatchSampler
 import submodule_utils as utils
 from submodule_cv.dataset import PatchDataset
 import submodule_cv.logger as logger
@@ -90,14 +90,15 @@ class PatchHanger(object):
         '''
         return utils.load_json(self.model_config_location)
 
-    def build_model(self, device=None):
+    def build_model(self, device=None, class_weight=None):
         '''Builds model by reading file specified in model config path
 
         Returns
         -------
         models.DeepModel
         '''
-        return models.DeepModel(self.load_model_config(), device=device)
+        return models.DeepModel(self.load_model_config(), device=device,
+                                class_weight=class_weight)
 
     def load_chunks(self, chunk_ids):
         """Load patch paths from specified chunks in chunk file
@@ -153,6 +154,37 @@ class PatchHanger(object):
         patch_dataset = PatchDataset(patch_paths, labels, self.model_config, training_set)
         return DataLoader(patch_dataset, batch_size=self.batch_size,
                 shuffle=shuffle, num_workers=self.num_patch_workers)
+
+    def calculate_sample_weights(self, labels):
+
+        values, counts = np.unique(labels, return_counts=True)
+        class_weight = {}
+        for idx, label in enumerate(values):
+            class_weight[label] = 1/counts[idx]
+        sample_weights = [0]*len(labels)
+        for idx, sample in enumerate(labels):
+            sample_weights[idx] = class_weight[labels[idx]]
+        return sample_weights
+
+    def create_data_loader(self, chunk_ids, shuffle=False, training_set=False):
+        patch_paths = self.load_chunks(chunk_ids)
+        labels = self.extract_labels(patch_paths)
+        patch_dataset = PatchDataset(patch_paths, labels, self.model_config, training_set)
+        if training_set:
+            if self.model_config['use_weighted_sampler']:
+                sample_weights = self.calculate_sample_weights(labels)
+                sampler = WeightedRandomSampler(sample_weights, len(sample_weights))
+
+            elif self.model_config['use_balanced_sampler']:
+                batch_sampler = BalancedBatchSampler(labels=labels, batch_size=self.batch_size)
+                return DataLoader(patch_dataset,  batch_sampler=batch_sampler,
+                                  num_workers=self.num_patch_workers)
+            else:
+                sampler = None
+        else:
+            sampler = None
+        return DataLoader(patch_dataset, batch_size=self.batch_size, sampler=sampler,
+                          shuffle=shuffle, num_workers=self.num_patch_workers)
 
 # https://github.com/Bjarten/early-stopping-pytorch/blob/master/pytorchtools.py
 class EarlyStopping:
