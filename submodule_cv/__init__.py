@@ -11,7 +11,7 @@ import numpy as np
 import torch
 import torchvision
 from sklearn.metrics import accuracy_score
-from torch.utils.data import Dataset, DataLoader, , WeightedRandomSampler
+from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
 from submodule_cv.sampler import BalancedBatchSampler
 import submodule_utils as utils
 from submodule_cv.dataset import PatchDataset
