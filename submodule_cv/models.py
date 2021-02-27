@@ -90,7 +90,7 @@ class DeepModel(BaseModel):
                 self.model = model
 
         if not self.is_eval:
-            if self.use_weighted_loss:
+            if self.use_weighted_loss and self.class_weight is not None:
                 weight = torch.Tensor(self.class_weight).cuda()
                 self.criterion = torch.nn.CrossEntropyLoss(
                     reduction='mean', weight=weight)
