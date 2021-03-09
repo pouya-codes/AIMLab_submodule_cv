@@ -59,7 +59,7 @@ class PatchDataset(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        x = Image.open(self.x_set[idx]).convert('RGB')
+        x = Image.open(self.x_set[idx][0]).convert('RGB')
         #x = x.transpose(2, 0, 1) #if x is np array and it has format Width * Height * Channel
         y = self.y_set[idx]
 
@@ -68,4 +68,4 @@ class PatchDataset(Dataset):
             # x = numpy.asarray(x).copy().transpose(2, 0, 1)
             # x = (x - 128.) / 128. # must be in [-1, 1] range
             # x = torch.from_numpy(x).type(torch.float)
-        return x, torch.tensor(y), self.x_set[idx]
+        return x, torch.tensor(y), self.x_set[idx][0], self.x_set[idx][1]
