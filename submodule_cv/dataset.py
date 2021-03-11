@@ -42,10 +42,12 @@ class PatchDataset(Dataset):
                     transforms_array.append(transforms.RandomCrop(model_config['augmentation']['crop']))
                 transforms_array.append(transforms.RandomRotation(20, resample=Image.BILINEAR))
             else:
-                if 'resize' in model_config['augmentation']:
+                if 'resize' in model_config['augmentation'] and 'crop' in model_config['augmentation']:
+                    transforms_array.append(transforms.Resize(model_config['augmentation']['crop']))
+                elif 'crop' in model_config['augmentation']:
+                    transforms_array.append(transforms.CenterCrop(model_config['augmentation']['crop']))
+                elif 'resize' in model_config['augmentation']:
                     transforms_array.append(transforms.Resize(model_config['augmentation']['resize']))
-                if 'crop' in model_config['augmentation']:
-                    transforms_array.append(transforms.RandomCrop(model_config['augmentation']['crop']))
         transforms_array.append(transforms.ToTensor())
         if (self.normalize):
             transforms_array.append(Normalize.Normalize(mean=model_config['normalize']['mean'], std=model_config['normalize']['std']))
