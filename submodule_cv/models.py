@@ -54,6 +54,8 @@ class DeepModel(BaseModel):
         https://stats.stackexchange.com/questions/207049/neural-network-for-binary-classification-use-1-or-2-output-neurons
         """
         super().__init__(config)
+        print("Config File:")
+        print(config)
         self.is_eval = is_eval
         self.deep_model = self.config["deep_model"]
         self.class_weight = class_weight if self.use_weighted_loss else None

@@ -21,39 +21,48 @@ class PatchDataset(Dataset):
         """
         self.x_set = x_set
         self.y_set = y_set
-        
+
         self.training_set = training_set
         if model_config :
             self.normalize = True if 'normalize' in model_config and model_config['normalize']['normalize'] else False
-            self.augmentation = True if 'augmentation' in model_config and model_config['augmentation'] else False
+            self.augmentation = True if 'augmentation' in model_config and model_config['augmentation']['augmentation'] else False
         else:
             self.normalize= False
             self.augmentation= False
 
         transforms_array = []
-        if (self.augmentation and self.training_set) :
-            transforms_array.extend([
-            transforms.ColorJitter(hue=.05, saturation=.05),
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomRotation(20, resample=Image.BILINEAR)
-            ])
-        transforms_array.append(transforms.ToTensor())    
+        if self.augmentation:
+            if self.training_set:
+                transforms_array.append(transforms.RandomHorizontalFlip())
+                transforms_array.append(transforms.RandomVerticalFlip())
+                transforms_array.append(transforms.ColorJitter(hue=.05, saturation=.05))
+                if 'resize' in model_config['augmentation']:
+                    transforms_array.append(transforms.Resize(model_config['augmentation']['resize']))
+                if 'crop' in model_config['augmentation']:
+                    transforms_array.append(transforms.RandomCrop(model_config['augmentation']['crop']))
+                transforms_array.append(transforms.RandomRotation(20, resample=Image.BILINEAR))
+            else:
+                if 'resize' in model_config['augmentation']:
+                    transforms_array.append(transforms.Resize(model_config['augmentation']['resize']))
+                if 'crop' in model_config['augmentation']:
+                    transforms_array.append(transforms.RandomCrop(model_config['augmentation']['crop']))
+        transforms_array.append(ToTensor.ToTensor())
         if (self.normalize):
-            transforms_array.append(transforms.Normalize(mean=model_config['normalize']['mean'], std=model_config['normalize']['std']))
-        else :
+            transforms_array.append(Normalize.Normalize(mean=model_config['normalize']['mean'], std=model_config['normalize']['std']))
+        else:
             transforms_array.append(transforms.Normalize((0.5,0.5,0.5), (0.5,0.5,0.5)))
-            
+
         # if (self.normalize or self.augmentation) :
         self.transform = transforms.Compose(transforms_array)
-        print (self.transform)
-            
+        print(self.transform)
+
 
         self.length = len(x_set)
         if len(x_set) != len(y_set):
             raise ValueError('x set length does not match y set length')
 
     def __len__(self):
-        return self.length        
+        return self.length
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
