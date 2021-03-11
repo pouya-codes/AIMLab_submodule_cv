@@ -119,7 +119,7 @@ class PatchHanger(object):
             chunks = data['chunks']
             for chunk in data['chunks']:
                 if chunk['id'] in chunk_ids:
-                    patch_paths.extend(chunk['imgs'])
+                    patch_paths.extend([[x,chunk['id']] for x in chunk['imgs']])
         if len(patch_paths) == 0:
             raise ChunkLookupException(
                     f"chunks {tuple(chunk_ids)} not found in {self.chunk_file_location}")
@@ -140,6 +140,7 @@ class PatchHanger(object):
         '''
         Returns the CategoryEnum
         '''
+        patch_path = patch_path[0]
         patch_id = utils.create_patch_id(patch_path, self.patch_pattern)
         label = utils.get_label_by_patch_id(patch_id, self.patch_pattern,
                 self.CategoryEnum, is_binary=self.is_binary)
