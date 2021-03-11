@@ -46,7 +46,7 @@ class PatchDataset(Dataset):
                     transforms_array.append(transforms.Resize(model_config['augmentation']['resize']))
                 if 'crop' in model_config['augmentation']:
                     transforms_array.append(transforms.RandomCrop(model_config['augmentation']['crop']))
-        transforms_array.append(ToTensor.ToTensor())
+        transforms_array.append(transforms.ToTensor())
         if (self.normalize):
             transforms_array.append(Normalize.Normalize(mean=model_config['normalize']['mean'], std=model_config['normalize']['std']))
         else:
