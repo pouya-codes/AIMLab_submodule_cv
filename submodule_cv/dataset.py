@@ -5,6 +5,7 @@ from torch.utils.data import Dataset
 from torchvision import transforms, utils
 from PIL import Image
 from skimage import io, transform
+from submodule_cv.transformers.CutOut import CutOut
 import numpy
 import torchvision
 
@@ -33,14 +34,17 @@ class PatchDataset(Dataset):
         transforms_array = []
         if self.augmentation:
             if self.training_set:
-                transforms_array.append(transforms.RandomHorizontalFlip())
-                transforms_array.append(transforms.RandomVerticalFlip())
-                transforms_array.append(transforms.ColorJitter(hue=.05, saturation=.05))
+                if 'flip' in model_config['augmentation'] and model_config['augmentation']['flip']:
+                    transforms_array.append(transforms.RandomHorizontalFlip())
+                    transforms_array.append(transforms.RandomVerticalFlip())
+                if 'color_jitter' in model_config['augmentation'] and model_config['augmentation']['color_jitter']:
+                    transforms_array.append(transforms.ColorJitter(hue=.05, saturation=.05))
                 if 'resize' in model_config['augmentation']:
                     transforms_array.append(transforms.Resize(model_config['augmentation']['resize']))
                 if 'crop' in model_config['augmentation']:
                     transforms_array.append(transforms.RandomCrop(model_config['augmentation']['crop']))
-                transforms_array.append(transforms.RandomRotation(20, resample=Image.BILINEAR))
+                if 'rotation' in model_config['augmentation'] and model_config['augmentation']['rotation']:
+                    transforms_array.append(transforms.RandomRotation(20, resample=Image.BILINEAR))
             else:
                 if 'resize' in model_config['augmentation'] and 'crop' in model_config['augmentation']:
                     transforms_array.append(transforms.Resize(model_config['augmentation']['crop']))
@@ -50,11 +54,14 @@ class PatchDataset(Dataset):
                     transforms_array.append(transforms.Resize(model_config['augmentation']['resize']))
         transforms_array.append(transforms.ToTensor())
         if (self.normalize):
-            transforms_array.append(Normalize.Normalize(mean=model_config['normalize']['mean'], std=model_config['normalize']['std']))
+            transforms_array.append(transforms.Normalize(mean=model_config['normalize']['mean'], std=model_config['normalize']['std']))
         else:
             transforms_array.append(transforms.Normalize((0.5,0.5,0.5), (0.5,0.5,0.5)))
 
-        # if (self.normalize or self.augmentation) :
+        if self.augmentation and self.training_set and 'cut_out' in model_config['augmentation'] and model_config['augmentation']['cut_out']:
+            transforms_array.append(CutOut(model_config['augmentation']['cut_out']['num_cut'],
+                                           model_config['augmentation']['cut_out']['size_cut'],
+                                           model_config['augmentation']['cut_out']['color_cut']))
         self.transform = transforms.Compose(transforms_array)
         print(self.transform)
 

@@ -179,6 +179,19 @@ class PatchHanger(object):
         return DataLoader(patch_dataset, batch_size=self.batch_size, sampler=sampler,
                           shuffle=shuffle, num_workers=self.num_patch_workers)
 
+# https://github.com/facebookresearch/mixup-cifar10/blob/master/train.py
+def mixup_data(input_data, input_label, alpha=1.0):
+    '''Returns mixed inputs, pairs of targets, and lambda'''
+    if alpha > 0:
+        lam = np.random.beta(alpha, alpha)
+    else:
+        lam = 1
+    batch_size = input_data.shape[0]
+    index = torch.randperm(batch_size).cuda()
+    input_data_mixed = lam * input_data + (1 - lam) * input_data[index, :]
+    input_label_mixed = input_label[index]
+    return input_data_mixed, input_label_mixed, lam
+
 # https://github.com/Bjarten/early-stopping-pytorch/blob/master/pytorchtools.py
 class EarlyStopping:
     """Early stops the training if validation loss doesn't improve after a given patience."""

@@ -59,6 +59,7 @@ class DeepModel(BaseModel):
         self.is_eval = is_eval
         self.deep_model = self.config["deep_model"]
         self.class_weight = class_weight if self.use_weighted_loss else None
+        self.MixUp = True if 'mix_up' in self.config and self.config['mix_up']['mix_up'] else False
 
         # using efficientnet
         if ("efficientnet") in self.deep_model:
@@ -157,7 +158,8 @@ class DeepModel(BaseModel):
                         num -= 1
         return num
 
-    def get_loss(self, logits, labels, output=None):
+    def get_loss(self, logits, labels, output=None,
+                 labels_mixed=None, lam=None):
         if type(output).__name__ == 'GoogLeNetOutputs':
             loss = self.criterion(logits.type(torch.float), labels.type(torch.long)) + 0.4 * (self.criterion(output.aux_logits1.type(
                 torch.float), labels.type(torch.long)) + self.criterion(output.aux_logits2.type(torch.float), labels.type(torch.long)))
@@ -165,13 +167,18 @@ class DeepModel(BaseModel):
             loss = self.criterion(logits.type(torch.float), labels.type(
                 torch.long)) + 0.4 * self.criterion(output.aux_logits.type(torch.float), labels.type(torch.long))
         else:
-            loss = self.criterion(logits.type(
-                torch.float), labels.type(torch.long))
-
+            if self.MixUp and labels_mixed is not None and lam is not None:
+                loss = lam * self.criterion(logits.type(
+                    torch.float), labels.type(torch.long)) + (1 - lam) * self.criterion(logits.type(
+                        torch.float), labels_mixed.type(torch.long))
+            else:
+                loss = self.criterion(logits.type(
+                    torch.float), labels.type(torch.long))
         return loss
 
-    def optimize_parameters(self, logits, labels, output=None):
-        self.loss = self.get_loss(logits, labels, output)
+    def optimize_parameters(self, logits, labels, output=None,
+                            labels_mixed=None, lam=None):
+        self.loss = self.get_loss(logits, labels, output, labels_mixed, lam)
         self.loss.backward()
         self.optimizer.step()
         self.optimizer.zero_grad()
