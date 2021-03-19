@@ -97,8 +97,10 @@ class PatchHanger(object):
         -------
         models.DeepModel
         '''
-        return models.DeepModel(self.load_model_config(), device=device,
+        return models.DeepModel(self.model_config, device=device,
                                 class_weight=class_weight)
+        # return models.DeepModel(self.load_model_config(), device=device,
+        #                         class_weight=class_weight)
 
     def load_chunks(self, chunk_ids):
         """Load patch paths from specified chunks in chunk file
