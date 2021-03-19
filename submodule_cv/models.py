@@ -124,6 +124,10 @@ class DeepModel(BaseModel):
         optimizer = getattr(torch.optim, self.config["optimizer"]["type"])
         self.optimizer = optimizer(params_to_update, **self.config["optimizer"]["parameters"])
 
+        if "scheduler" in self.config:
+            scheduler = getattr(torch.optim.lr_scheduler, self.config["scheduler"]["type"])
+            self.scheduler = scheduler(self.optimizer, **self.config["scheduler"]["parameters"])
+
         if self.continue_train:
             self.load_state(config["load_deep_model_id"], device=device)
 
@@ -186,6 +190,12 @@ class DeepModel(BaseModel):
 
     def get_current_errors(self):
         return self.loss.item()
+
+    def scheduler_step(self):
+        self.scheduler.step()
+
+    def get_current_lr(self):
+        return self.optimizer.param_groups[0]['lr']
 
     def load_state(self, save_path, device=None):
         if device:
