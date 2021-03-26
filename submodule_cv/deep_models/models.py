@@ -27,6 +27,8 @@ diff_fc_layer = ['mobilenet_v2', 'mnasnet1_3', 'shufflenet_v2_x1_5']
 class AdaptiveConcatPool2d(nn.Module):
     "Layer that concats `AdaptiveAvgPool2d` and `AdaptiveMaxPool2d`"
     def __init__(self, size=None):
+        super().__init__()
+
         self.size = size or 1
         self.ap = nn.AdaptiveAvgPool2d(self.size)
         self.mp = nn.AdaptiveMaxPool2d(self.size)
@@ -102,12 +104,12 @@ class Model(nn.Module):
                 self.feature_extract = nn.Sequential(*list(model.children())[0]) if feature_map[self.base_model]==0 \
                                        else nn.Sequential(*list(model.children())[:feature_map[self.base_model]])
             # Last layers same as fastai
-            pool = AdaptiveConcatPool2d() if concat_pool else nn.AdaptiveAvgPool2d(1)
+            pool = AdaptiveConcatPool2d() if self.concat_pool else nn.AdaptiveAvgPool2d(1)
             layers = [pool, nn.Flatten()]
-            num_channel = 2*out_channel[self.base_model] if concat_pool else out_channel[self.base_model]
+            num_channel = 2*out_channel[self.base_model] if self.concat_pool else out_channel[self.base_model]
             layers += [nn.BatchNorm1d(num_channel), nn.Dropout(p=0.5)]
             layers += [nn.Linear(num_channel, 512), nn.ReLU(inplace=True)]
-            layers += [nn.BatchNorm1d(512), nn.Dropout(p=0.5), nn.Linear(num_channel, self.num_classes)]
+            layers += [nn.BatchNorm1d(512), nn.Dropout(p=0.5), nn.Linear(512, self.num_classes)]
             self.classifier = nn.Sequential(*layers)
         else:
             raise NotImplementedError(f"{self.last_layers} is not implemented!")
