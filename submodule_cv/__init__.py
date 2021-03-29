@@ -161,10 +161,10 @@ class PatchHanger(object):
             sample_weights[idx] = class_weight[labels[idx]]
         return sample_weights
 
-    def create_data_loader(self, chunk_ids, shuffle=False, training_set=False):
+    def create_data_loader(self, chunk_ids, shuffle=False, training_set=False, size=-1):
         patch_paths = self.load_chunks(chunk_ids)
         labels = self.extract_labels(patch_paths)
-        patch_dataset = PatchDataset(patch_paths, labels, self.model_config, training_set)
+        patch_dataset = PatchDataset(patch_paths, labels, self.model_config, training_set, size)
         if training_set:
             if self.model_config['use_weighted_sampler']:
                 sample_weights = self.calculate_sample_weights(labels)
