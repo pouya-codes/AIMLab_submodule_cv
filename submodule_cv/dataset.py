@@ -55,6 +55,8 @@ class PatchDataset(Dataset):
                 orig_size = self.original_size()
                 if resize_: temp_size = self.model_config['augmentation']['resize']
                 self.model_config['augmentation']['resize'] = self.size
+                resize__ = True if resize_ else False
+                if not resize_: resize_ = True
                 if crop_:
                     temp_crop = self.model_config['augmentation']['crop']
                     self.model_config['augmentation']['crop'] = int((self.size/orig_size) * temp_crop)
@@ -95,9 +97,9 @@ class PatchDataset(Dataset):
                                            self.model_config['augmentation']['cut_out']['color_cut']))
 
         if self.size!=-1 and self.augmentation:
-            if resize_: self.model_config['augmentation']['resize'] = temp_size
+            if resize__: self.model_config['augmentation']['resize'] = temp_size
+            if not resize__: del self.model_config['augmentation']['resize']
             if crop_: self.model_config['augmentation']['crop'] = temp_crop
-            if not resize_: del self.model_config['augmentation']['resize']
             if self.training_set and cut_out_: self.model_config['augmentation']['cut_out']['size_cut'] = temp_cut_out
         transforms_ = transforms.Compose(transforms_array)
         print(transforms_)

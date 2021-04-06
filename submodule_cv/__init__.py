@@ -169,7 +169,7 @@ class PatchHanger(object):
             if self.model_config['use_weighted_sampler']:
                 sample_weights = self.calculate_sample_weights(labels)
                 sampler = WeightedRandomSampler(sample_weights, len(sample_weights))
-
+                shuffle = False
             elif self.model_config['use_balanced_sampler']:
                 batch_sampler = BalancedBatchSampler(labels=labels, batch_size=self.batch_size)
                 return DataLoader(patch_dataset,  batch_sampler=batch_sampler,
