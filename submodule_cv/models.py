@@ -86,17 +86,20 @@ class DeepModel(BaseModel):
                 #self.criterion = torch.nn.BCEWithLogitsLoss(reduction='mean')
 
         print("Parameters to learn:")
-        if self.freeze_:
-            params_to_update = []
-            for name,param in model.named_parameters():
-                if param.requires_grad == True:
-                    params_to_update.append(param)
-                    print("\t", name)
-        else:
-            params_to_update = model.parameters()
-            for name,param in model.named_parameters():
-                if param.requires_grad == True:
-                    print("\t", name)
+        params = self.find_trainable_parameters()
+        params_to_update = []
+        # TODO
+        # if self.freeze_:
+        # else:
+        for layer in ["feature_extract", "classifier"]:
+            # Check if it is empty
+            if params[layer]:
+                params_to_update.append({"params": params[layer]})
+        assert params_to_update, f"There is not parameter for optimizer!"
+
+        for name,param in model.named_parameters():
+            if param.requires_grad == True:
+                print("\t", name)
 
         optimizer = getattr(torch.optim, self.config["optimizer"]["type"])
         self.optimizer = optimizer(params_to_update, **self.config["optimizer"]["parameters"])
