@@ -18,7 +18,7 @@ class CutOut(object):
         elif color=="black":
             self.color = 0.0
         else:
-            raise ValueError(f"{color} is not implemented!")
+            raise NotImplementedError(f"{color} is not implemented!")
 
 
     def __call__(self, tensor_img):
