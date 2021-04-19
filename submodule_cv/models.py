@@ -17,7 +17,7 @@ class BaseModel():
         self.use_weighted_loss = config["use_weighted_loss"]
         self.continue_train = config["continue_train"]
         self.freeze_ = True if "freeze" in config and config["freeze"]!=-1 else False
-        self.trainable_layer_num = config["freeze"] if self.freeze else None
+        self.trainable_layer_num = config["freeze"] if self.freeze_ else None
 
     def forward(self):
         pass
@@ -60,8 +60,6 @@ class DeepModel(BaseModel):
         self.class_weight = class_weight if self.use_weighted_loss else None
         self.MixUp = True if 'mix_up' in self.config and self.config['mix_up']['use_mix_up'] else False
 
-        ###############
-        # UPDATE
         model = Model(config["model"])
 
         print(model)
@@ -95,7 +93,7 @@ class DeepModel(BaseModel):
             # Check if it is empty
             if params[layer]:
                 params_to_update.append({"params": params[layer]})
-        assert params_to_update, f"There is not parameter for optimizer!"
+        assert params_to_update, f"There is no parameter for optimizer!"
 
         for name,param in model.named_parameters():
             if param.requires_grad == True:
@@ -225,7 +223,7 @@ class DeepModel(BaseModel):
                     isinstance(layer, models.squeezenet.Fire) or \
                     isinstance(layer, nn.ModuleList) or \
                     isinstance(layer, MBConvBlock):
-                        num = freeze_layers(reversed(list(layer.children())), num)
+                        num = unfreeze_layers(reversed(list(layer.children())), num)
                     else:
                         flag = False
                         if not isinstance(layer, torch.nn.BatchNorm2d) and not isinstance(layer, torch.nn.BatchNorm1d):
