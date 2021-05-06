@@ -22,9 +22,8 @@ import submodule_cv.models as models
 
 # Folder permission mode
 p_mode = 0o777
-oldmask = os.umask(000)
-if torch.cuda.is_available():
-    nvmlInit()
+oldmask = os.umask(000) 
+nvmlInit()
 
 class ChunkLookupException(Exception):
     pass
