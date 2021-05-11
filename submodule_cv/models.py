@@ -183,6 +183,32 @@ class DeepModel(BaseModel):
         model_id = state['iter_idx']
         return model_id
 
+    def load_state_old_version(self, save_path, device=None):
+        '''
+        This function load the model trained on previous singularity_train
+        version to the newest one.
+
+        NOTE: it does not load the optimizer. it used only for testing, not
+        continuing training!
+        '''
+        if device:
+            state = torch.load(save_path, map_location=device)
+        elif not torch.cuda.is_available():
+            state = torch.load(save_path, map_location='cpu')
+        else:
+            state = torch.load(save_path)
+
+        cur_state = self.model.state_dict()
+        new_state = {}
+        for (old, new) in zip(state['state_dict'].items(), cur_state.items()):
+            _, old_pt = old
+            new_name, _ = new
+            new_state[new_name] = old_pt
+        self.model.load_state_dict(new_state)
+
+        model_id = state['iter_idx']
+        return model_id
+
     def save_state(self, save_location, train_instance_name, iter_idx, epoch):
         filename = f'{train_instance_name}.pth'
         save_path = os.path.join(save_location, filename)
