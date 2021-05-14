@@ -22,7 +22,12 @@ import submodule_cv.models as models
 
 # Folder permission mode
 p_mode = 0o777
-oldmask = os.umask(000) 
+oldmask = os.umask(000)
+########
+# if using auto_annotate on numbers
+# if torch.cuda.is_available():
+#     nvmlInit()
+########
 nvmlInit()
 
 class ChunkLookupException(Exception):
