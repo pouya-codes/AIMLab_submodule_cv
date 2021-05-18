@@ -6,6 +6,7 @@ from torchvision import transforms, utils
 from PIL import Image
 from skimage import io, transform
 from submodule_cv.transformers.CutOut import CutOut
+from submodule_cv.transformers.SizeJitter import SizeJitter
 import numpy
 import torchvision
 
@@ -47,6 +48,7 @@ class PatchDataset(Dataset):
             rotation_ = True if 'rotation' in self.model_config['augmentation'] else False
             colo_jitter_ = True if 'color_jitter' in self.model_config['augmentation'] else False
             cut_out_ = True if 'cut_out' in self.model_config['augmentation'] else False
+            size_jitter_ = True if 'size_jitter' in self.model_config['augmentation'] else False
 
         if self.size!=-1:
             if not self.augmentation:
@@ -65,7 +67,7 @@ class PatchDataset(Dataset):
                     self.model_config['augmentation']['cut_out']['size_cut'] = int((self.size/orig_size) * temp_cut_out)
         if self.augmentation:
             if self.training_set:
-                if flip_:
+                if flip_ and self.model_config['augmentation']['flip']:
                     transforms_array.append(transforms.RandomHorizontalFlip())
                     transforms_array.append(transforms.RandomVerticalFlip())
                 if colo_jitter_ and self.model_config['augmentation']['color_jitter']:
@@ -74,6 +76,10 @@ class PatchDataset(Dataset):
                     transforms_array.append(transforms.Resize(self.model_config['augmentation']['resize']))
                 if crop_:
                     transforms_array.append(transforms.RandomCrop(self.model_config['augmentation']['crop']))
+                if size_jitter_ and self.model_config['augmentation']['size_jitter']['use_size_jitter']:
+                    transforms_array.append(SizeJitter(self.model_config['augmentation']['size_jitter']['percentage'],
+                                                       self.model_config['augmentation']['size_jitter']['probability'],
+                                                       self.model_config['augmentation']['size_jitter']['color']))
                 if rotation_ and self.model_config['augmentation']['rotation']:
                     transforms_array.append(transforms.RandomRotation(20, interpolation=2))
             else:
@@ -91,7 +97,7 @@ class PatchDataset(Dataset):
         else:
             transforms_array.append(transforms.Normalize((0.5,0.5,0.5), (0.5,0.5,0.5)))
 
-        if self.augmentation and self.training_set and cut_out_:
+        if self.augmentation and self.training_set and cut_out_ and self.model_config['augmentation']['cut_out']['use_cut_out']:
             transforms_array.append(CutOut(self.model_config['augmentation']['cut_out']['num_cut'],
                                            self.model_config['augmentation']['cut_out']['size_cut'],
                                            self.model_config['augmentation']['cut_out']['color_cut']))
