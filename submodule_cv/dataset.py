@@ -77,7 +77,7 @@ class PatchDataset(Dataset):
                 if crop_:
                     transforms_array.append(transforms.RandomCrop(self.model_config['augmentation']['crop']))
                 if size_jitter_ and self.model_config['augmentation']['size_jitter']['use_size_jitter']:
-                    transforms_array.append(SizeJitter(self.model_config['augmentation']['size_jitter']['percentage'],
+                    transforms_array.append(SizeJitter(self.model_config['augmentation']['size_jitter']['ratio'],
                                                        self.model_config['augmentation']['size_jitter']['probability'],
                                                        self.model_config['augmentation']['size_jitter']['color']))
                 if rotation_ and self.model_config['augmentation']['rotation']:

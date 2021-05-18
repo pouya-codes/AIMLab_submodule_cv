@@ -1,48 +1,48 @@
 import torch
 from torchvision import transforms
 import random
+from PIL import Image
 
 class SizeJitter(object):
     """
-    Cutting out random places in image.
+    Resizing Image with +- ratio
     """
 
-    def __init__(self, size_perc, prob=0.5, color="black"):
-        assert isinstance(size_perc, float)
+    def __init__(self, ratio, prob=0.5, color="black"):
+        assert isinstance(ratio, float)
         assert isinstance(prob, float)
 
-        self.size_perc = size_perc
+        self.ratio = ratio
         self.prob = prob
 
         if color=="white":
-            self.color = 1.0
+            self.color = 255
         elif color=="black":
-            self.color = 0.0
+            self.color = 0
         else:
             raise NotImplementedError(f"{color} is not implemented!")
 
-    def __call__(self, tensor_img):
-        assert isinstance(tensor_img, torch.Tensor)
 
-        if random.random() >= self.prob:
-
-            _, H, W = tensor_img.shape
-            resize_size = (int(H*self.size_perc), int(W*self.size_perc))
-            resized_img = transforms.Resize(resize_size)(tensor_img)
-
-            if self.size_perc < 1:
-                pad_H = int((H-resize_size[0])/2)
-                pad_W = int((W-resize_size[1])/2)
-                pad_size = (pad_H, pad_W, H-pad_H-resize_size[0], W-pad_W-resize_size[1])
-                out_tensor_img = transforms.Pad(pad_size, fill=self.color)(resized_img)
-
-            elif self.size_perc > 1:
-                crop_size = (H,W)
-                out_tensor_img = transforms.RandomCrop(crop_size)(resized_img)
-
+    def __call__(self, PIL_img):
+        assert isinstance(PIL_img, Image.Image)
+        if random.random() < self.prob:
+            W, H = PIL_img.size
+            rand_zoom = random.random() # > 0.5 -> Zoom out; < 0.5 -> Zoom in!
+            ratio = 1 - self.ratio if rand_zoom >= 0.5 else 1 + self.ratio
+            resize_size = (int(W*ratio), int(H*ratio))
+            resized_img = transforms.Resize(resize_size)(PIL_img)
+            # Zoom out
+            if rand_zoom >= 0.5:
+                # ratio < 1
+                pad_H = int((H-resize_size[1])/2)
+                pad_W = int((W-resize_size[0])/2)
+                pad_size = (pad_W, pad_H, W-pad_W-resize_size[0], H-pad_H-resize_size[1])
+                out_PIL_img = transforms.Pad(pad_size, fill=self.color)(resized_img)
+            # Zoom In
             else:
-                out_tensor_img = tensor_img
-            # ToTensor Converts a PIL Image or numpy.ndarray (H x W x C) in the range [0, 255]
-            # to a torch.FloatTensor of shape (C x H x W) in the range [0.0, 1.0].
-            return out_tensor_img
-        return tensor_img
+                crop_size = (H,W)
+                out_PIL_img = transforms.RandomCrop(crop_size)(resized_img)
+
+            return out_PIL_img
+        else:
+            return PIL_img
