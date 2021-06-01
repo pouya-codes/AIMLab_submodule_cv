@@ -190,6 +190,7 @@ class DeepModel(BaseModel):
 
         NOTE: it does not load the optimizer. it used only for testing, not
         continuing training!
+        NOTE: it does not support model trained on multi-GPUs (TODO)
         '''
         if device:
             state = torch.load(save_path, map_location=device)
@@ -208,6 +209,36 @@ class DeepModel(BaseModel):
 
         model_id = state['iter_idx']
         return model_id
+
+    def load_state_repr(self, save_path, device=None):
+        '''
+        This function load the model trained on representation learning
+
+        NOTE: it does not load the optimizer. it used only for testing, not
+        continuing training!
+        NOTE: it does not support model trained on multi-GPUs (TODO)
+        '''
+        if device:
+            state = torch.load(save_path, map_location=device)
+        elif not torch.cuda.is_available():
+            state = torch.load(save_path, map_location='cpu')
+        else:
+            state = torch.load(save_path)
+
+        # Approach 1
+        # cur_state = self.model.state_dict()
+        # new_state = {}
+        # for (repr, cur) in zip(state.items(), cur_state.items()):
+        #     repr_name, repr_pt = repr
+        #     cur_name, cur_pt = cur
+        #     if repr_name.startswith('feature_extract.'):
+        #         assert repr_name==cur_name, f"{repr_name} is not same as {cur_name}"
+        #         new_state[cur_name] = repr_pt
+        #
+        # self.model.load_state_dict(new_state, strict=False)
+
+        # Approach 1
+        self.model.load_state_dict(state, strict=False)
 
     def save_state(self, save_location, train_instance_name, iter_idx, epoch):
         filename = f'{train_instance_name}.pth'
@@ -229,6 +260,14 @@ class DeepModel(BaseModel):
                 if hasattr(layer, 'bias') and layer.bias is not None:
                     layer.bias.requires_grad_(False)
         self.model.apply(freeze_all_but_bn)
+
+    def freeze_all(self):
+        def freeze_all_(layer):
+            if hasattr(layer, 'weight') and layer.weight is not None:
+                layer.weight.requires_grad_(False)
+            if hasattr(layer, 'bias') and layer.bias is not None:
+                layer.bias.requires_grad_(False)
+        self.model.apply(freeze_all_)
 
     def make_classifier_layer_trainable(self):
         for param in self.model.classifier.parameters():
@@ -276,8 +315,10 @@ class DeepModel(BaseModel):
                     raise ValueError(f"{name} should be either _feature_extract_ or _classifier_!")
         return params_to_update
 
-    def update_optimizer_schedular(self, learning_rate, use_scheduler=True, epoch=None, batch_per_epoch=None):
+    def update_optimizer_schedular(self, learning_rate=None, use_scheduler=True, epoch=None, batch_per_epoch=None):
         lr = {}
+        if learning_rate is None:
+            learning_rate = self.config["optimizer"]["parameters"]["lr"]
         if isinstance(learning_rate, float):
             lr["classifier"]      = learning_rate
             lr["feature_extract"] = learning_rate / 10
