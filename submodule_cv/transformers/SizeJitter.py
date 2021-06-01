@@ -5,7 +5,7 @@ from PIL import Image
 
 class SizeJitter(object):
     """
-    Resizing Image with +- ratio
+    Resizing Image with a random value within original_size +/- ratio
     """
 
     def __init__(self, ratio, prob=0.5, color="black"):
@@ -27,12 +27,14 @@ class SizeJitter(object):
         assert isinstance(PIL_img, Image.Image)
         if random.random() < self.prob:
             W, H = PIL_img.size
-            rand_zoom = random.random() # > 0.5 -> Zoom out; < 0.5 -> Zoom in!
-            ratio = 1 - self.ratio if rand_zoom >= 0.5 else 1 + self.ratio
+            zoom_in_or_out = random.choice(["zoom_in", "zoom_out"])
+            rand_zoom = random.random() #float between 0.0 and 1.0
+            ratio = 1 - self.ratio*rand_zoom if zoom_in_or_out == "zoom_out" else 1 + self.ratio*rand_zoom
             resize_size = (int(W*ratio), int(H*ratio))
             resized_img = transforms.Resize(resize_size)(PIL_img)
             # Zoom out
-            if rand_zoom >= 0.5:
+            if zoom_in_or_out == "zoom_out":
+                #rand_zoom >= 0.5:
                 # ratio < 1
                 pad_H = int((H-resize_size[1])/2)
                 pad_W = int((W-resize_size[0])/2)
