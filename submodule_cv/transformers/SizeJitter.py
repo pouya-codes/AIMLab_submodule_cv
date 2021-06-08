@@ -8,12 +8,13 @@ class SizeJitter(object):
     Resizing Image with a random value within original_size +/- ratio
     """
 
-    def __init__(self, ratio, prob=0.5, color="black"):
+    def __init__(self, ratio, prob=0.5, color="black", dynamic_bool=False):
         assert isinstance(ratio, float)
         assert isinstance(prob, float)
 
         self.ratio = ratio
         self.prob = prob
+        self.dynamic_bool = dynamic_bool
 
         if color=="white":
             self.color = 255
@@ -28,7 +29,10 @@ class SizeJitter(object):
         if random.random() < self.prob:
             W, H = PIL_img.size
             zoom_in_or_out = random.choice(["zoom_in", "zoom_out"])
-            rand_zoom = random.random() #float between 0.0 and 1.0
+            if self.dynamic_bool:
+                rand_zoom = random.random() #float between 0.0 and 1.0
+            else:
+                rand_zoom = 1.0
             ratio = 1 - self.ratio*rand_zoom if zoom_in_or_out == "zoom_out" else 1 + self.ratio*rand_zoom
             resize_size = (int(W*ratio), int(H*ratio))
             resized_img = transforms.Resize(resize_size)(PIL_img)
