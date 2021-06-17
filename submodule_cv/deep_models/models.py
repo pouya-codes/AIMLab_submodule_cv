@@ -12,13 +12,13 @@ out_channel = {'alexnet': 256, 'vgg16': 512, 'vgg19': 512, 'vgg16_bn': 512, 'vgg
                'squeezenet1_1': 512, 'efficientnet-b0': 1280, 'efficientnet-l2': 5504,
                'efficientnet-b1': 1280, 'efficientnet-b2': 1408, 'efficientnet-b3': 1536,
                'efficientnet-b4': 1792, 'efficientnet-b5': 2048, 'efficientnet-b6': 2304,
-               'efficientnet-b7': 2560, 'efficientnet-b8': 2816}
+               'efficientnet-b7': 2560, 'efficientnet-b8': 2816, 'inception_v3': 2048}
 
 feature_map = {'alexnet': -2, 'vgg16': -2,  'vgg19': -2, 'vgg16_bn': -2,  'vgg19_bn': -2,
                'resnet18': -2, 'resnet34': -2, 'resnet50': -2, 'resnext50_32x4d': -2,
                'resnext101_32x8d': -2, 'mobilenet_v2': 0, 'mobilenet_v3_large': -2,
                'mobilenet_v3_small': -2, 'mnasnet1_3': 0, 'shufflenet_v2_x1_5': -1,
-               'squeezenet1_1': 0}
+               'squeezenet1_1': 0, 'inception_v3': -3}
 
 diff_fc_layer = ['mobilenet_v2', 'mnasnet1_3', 'shufflenet_v2_x1_5']
 ####################################################
