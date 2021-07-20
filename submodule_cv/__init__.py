@@ -28,7 +28,7 @@ oldmask = os.umask(000)
 # if torch.cuda.is_available():
 #     nvmlInit()
 ########
-nvmlInit()
+# nvmlInit()
 
 class ChunkLookupException(Exception):
     pass
